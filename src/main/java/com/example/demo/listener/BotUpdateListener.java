@@ -1,5 +1,7 @@
 package com.example.demo.listener;
 
+import com.example.demo.AutomaticRegistrationWithBotApplication;
+import com.example.demo.registration.service.AutomaticRegistrationService;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.model.Update;
@@ -17,7 +19,7 @@ public class BotUpdateListener implements UpdatesListener {
     private final TelegramBot telegramBot;
 
     @Autowired
-    public BotUpdateListener(TelegramBot telegramBot) {
+    public BotUpdateListener(TelegramBot telegramBot, AutomaticRegistrationService service) {
         this.telegramBot = telegramBot;
     }
 
@@ -34,4 +36,5 @@ public class BotUpdateListener implements UpdatesListener {
         });
         return UpdatesListener.CONFIRMED_UPDATES_ALL;
     }
+
 }

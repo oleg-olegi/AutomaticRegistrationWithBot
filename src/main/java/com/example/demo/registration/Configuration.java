@@ -9,7 +9,8 @@ import java.util.Properties;
 
 @Component
 public class Configuration {
-    private static final String CONFIG_FILE = "C:/Users/one/IdeaProjects/AutomaticRegistrationBot/src/main/resources/config.properties";
+    private static final String CONFIG_FILE = "C:/Users/trash/IdeaProjects/AutomaticRegistrationWithBot/src" +
+            "/main/resources/application.properties";
     private static final Properties properties;
 
     static {

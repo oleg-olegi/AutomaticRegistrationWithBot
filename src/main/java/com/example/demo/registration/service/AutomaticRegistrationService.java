@@ -1,6 +1,12 @@
 package com.example.demo.registration.service;
 
+import com.example.demo.model.User;
 import com.example.demo.registration.Configuration;
+import com.example.demo.repository.UserRepository;
+import com.pengrad.telegrambot.TelegramBot;
+import com.pengrad.telegrambot.request.SendMessage;
+import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.*;
@@ -10,15 +16,27 @@ import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
+@Log4j2
 public class AutomaticRegistrationService {
     private static final Logger logger = LogManager.getLogger(AutomaticRegistrationService.class);
 
+    @Autowired
+    private TelegramBot telegramBot;
+    @Autowired
+    private UserRepository userRepository;
+
+
     private boolean flag = true;
     private boolean buttonFlag = true;
+
+    @Getter
+    private boolean successRegistration = false;///////////
 
     @Autowired
     private WebDriver driver;
@@ -26,7 +44,7 @@ public class AutomaticRegistrationService {
     @Autowired
     private Configuration configuration;
 
-    @Scheduled(cron = "0 0 12 * * MON") // Every Monday at 12:00
+    @Scheduled(cron = "50 59 11 * * MON") // Every Monday at 12:00
     public void scheduleTask() {
         // Открытие страницы для регистрации на игру
         driver.get("https://vtb.mzgb.net/account");
@@ -99,20 +117,20 @@ public class AutomaticRegistrationService {
                     logger.info("Button 'Зарегистрироваться' was clicked");
                 }
             }
-
-            WebElement moveButton = driver.findElement(By.xpath("//button[contains(text(), 'Далее')]"));
-            moveButton.click();
-            logger.info("Button 'Далее' was clicked");
+            clickMoveButton();
+//            WebElement moveButton = driver.findElement(By.xpath("//button[contains(text(), 'Далее')]"));
+//            moveButton.click();
+//            logger.info("Button 'Далее' was clicked");
 
             WebElement plusIcon = driver.findElement(By.cssSelector("img[src='/img/icons/plus.svg']"));
             for (int i = 0; i < 4; i++) {
                 plusIcon.click();
                 logger.info("Button '+' was clicked 4 times");
             }
-
-            WebElement moveButton1 = driver.findElement(By.xpath("//button[contains(text(), 'Далее')]"));
-            moveButton1.click();
-            logger.info("Button 'Далее' was clicked");
+            clickMoveButton();
+//            WebElement moveButton1 = driver.findElement(By.xpath("//button[contains(text(), 'Далее')]"));
+//            moveButton1.click();
+//            logger.info("Button 'Далее' was clicked");
 
             WebElement registration = driver.findElement(By.xpath("//button[contains(text(), 'Регистрация на игру')]"));
             registration.click();
@@ -122,10 +140,18 @@ public class AutomaticRegistrationService {
             logger.info("Waiting 10 sec");
             logger.info("Закрытие браузера.");
             driver.quit();
+            successRegistration = true;
+            sendSuccessMessage();
             flag = false;
         } else {
             logger.info("Еще не время для регистрации.");
         }
+    }
+
+    private void clickMoveButton() {
+        WebElement moveButton1 = driver.findElement(By.xpath("//button[contains(text(), 'Далее')]"));
+        moveButton1.click();
+        logger.info("Button 'Далее' was clicked");
     }
 
     private void registerButtonClick(WebElement registerButton) {
@@ -138,6 +164,21 @@ public class AutomaticRegistrationService {
             logger.info("Кнопка 'Зарегистрироваться' нажата");
         } catch (StaleElementReferenceException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void sendSuccessMessage() {
+        log.info("В методе sendSuccessMessage()");
+        if (isSuccessRegistration()) {
+            List<User> chatIdList = userRepository.findAll();
+            for (User user : chatIdList) {
+                LocalDate localDate = LocalDate.now();
+                String message = "\uD83C\uDF89" + user.getName() + "\uD83C\uDF89"
+                        + "\nУспешная регистрация на Туц-Туц Квиз"
+                        + "\nИгра состоится " + localDate.plusDays(3).format(DateTimeFormatter.ofPattern("dd MMMM yyyy"))
+                        + "\n\uD83E\uDD18Rock&Rofl\uD83E\uDD18";
+                telegramBot.execute(new SendMessage(user.getChatId(), message));
+            }
         }
     }
 }
