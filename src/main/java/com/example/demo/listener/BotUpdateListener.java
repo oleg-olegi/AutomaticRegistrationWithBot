@@ -10,7 +10,9 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 @Log4j2
@@ -19,7 +21,7 @@ public class BotUpdateListener implements UpdatesListener {
     private final TelegramBot telegramBot;
 
     @Autowired
-    public BotUpdateListener(TelegramBot telegramBot, AutomaticRegistrationService service) {
+    public BotUpdateListener(TelegramBot telegramBot) {
         this.telegramBot = telegramBot;
     }
 
