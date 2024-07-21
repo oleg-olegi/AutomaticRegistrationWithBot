@@ -39,7 +39,7 @@ public class AutomaticRegistrationService {
     private boolean flag = true;
     private boolean buttonFlag = true;
 
-    @Scheduled(cron = "00 59 11 * * FRI")
+    @Scheduled(cron = "00 59 11 ? * MON,FRI")
     public void scheduleTask() {
         try {
             performLogin();
@@ -99,7 +99,7 @@ public class AutomaticRegistrationService {
     private void performRegistrationTask() throws InterruptedException {
         LocalDateTime now = LocalDateTime.now();
 
-        if (DayOfWeek.FRIDAY == now.getDayOfWeek() && 12 == now.getHour() && 0 == now.getMinute()) {
+        if (12 == now.getHour() && 0 == now.getMinute()) {
             driver.navigate().refresh();
             log.info("Refreshed page");
 
@@ -201,13 +201,17 @@ public class AutomaticRegistrationService {
     }
 
     private void sendPoll(LocalDate localDate, Long chatId) {
-
-        String question = String.format("Иду на MZGB %s",
-                localDate.plusDays(3).format(DateTimeFormatter.ofPattern("dd MMMM yyyy")));
-
+        String question;
+        if (localDate.getDayOfWeek() == DayOfWeek.MONDAY) {
+            question = String.format("Иду на ТУЦ %s",
+                    localDate.plusDays(3).format(DateTimeFormatter.ofPattern("dd MMMM yyyy")));
+        } else {
+            question = String.format("Иду на MZGB %s",
+                    localDate.plusDays(3).format(DateTimeFormatter.ofPattern("dd MMMM yyyy")));
+        }
         InputPollOption pollOption1 = new InputPollOption("Категорически ДА");
-        InputPollOption pollOption2 = new InputPollOption("Бессовестное НЕТ");
-        InputPollOption pollOption3 = new InputPollOption("Робкое Отвечу позже");
+        InputPollOption pollOption2 = new InputPollOption("Бессовестно НЕТ");
+        InputPollOption pollOption3 = new InputPollOption("Робко Отвечу позже");
 
         InputPollOption[] pollOptionsArray = {pollOption1, pollOption2, pollOption3};
 
