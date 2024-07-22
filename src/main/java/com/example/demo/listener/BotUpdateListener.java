@@ -1,16 +1,22 @@
 package com.example.demo.listener;
 
 import com.example.demo.AutomaticRegistrationWithBotApplication;
+import com.example.demo.model.User;
 import com.example.demo.registration.service.AutomaticRegistrationService;
+import com.example.demo.repository.UserRepository;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.model.Update;
+import com.pengrad.telegrambot.model.request.InputPollOption;
+import com.pengrad.telegrambot.request.SendPoll;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 
@@ -21,8 +27,9 @@ public class BotUpdateListener implements UpdatesListener {
     private final TelegramBot telegramBot;
 
     @Autowired
-    public BotUpdateListener(TelegramBot telegramBot) {
+    public BotUpdateListener(TelegramBot telegramBot, UserRepository userRepository) {
         this.telegramBot = telegramBot;
+
     }
 
     @PostConstruct
@@ -38,5 +45,4 @@ public class BotUpdateListener implements UpdatesListener {
         });
         return UpdatesListener.CONFIRMED_UPDATES_ALL;
     }
-
 }
