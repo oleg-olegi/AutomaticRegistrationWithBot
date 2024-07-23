@@ -1,4 +1,4 @@
-package com.example.demo.config;
+package com.example.demo.registration.config;
 
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;

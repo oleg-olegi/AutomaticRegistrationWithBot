@@ -1,7 +1,7 @@
-package com.example.demo;
+package com.example.demo.registration.service;
 
 import com.example.demo.model.User;
-import com.example.demo.Configuration;
+import com.example.demo.registration.Configuration;
 import com.example.demo.repository.UserRepository;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.request.InputPollOption;
@@ -31,6 +31,8 @@ public class AutomaticRegistrationService {
     private WebDriver driver;
     @Autowired
     private Configuration configuration;
+    @Autowired
+    private MessageGenerator messageGenerator;
 
     private boolean flag = true;
     private boolean buttonFlag = true;
@@ -187,15 +189,18 @@ public class AutomaticRegistrationService {
         LocalDate localDate = LocalDate.now();
         DayOfWeek dayOfWeek = localDate.getDayOfWeek();
 
-        String dateFormat = localDate.plusDays(3).format(DateTimeFormatter.ofPattern("dd MMMM yyyy"));
-        String messageTemplate;
-        if (dayOfWeek == DayOfWeek.FRIDAY) {
-            messageTemplate = "\uD83C\uDF89%s\uD83C\uDF89\nУспешная регистрация на MZGB-Квиз!\nИгра состоится %s\n\uD83E\uDD18Rock&Rofl\uD83E\uDD18";
-        } else {
-            messageTemplate = "\uD83C\uDF89%s\uD83C\uDF89\nУспешная регистрация на ТУЦ-Квиз!\nИгра состоится %s\n\uD83E\uDD18Rock&Rofl\uD83E\uDD18";
-        }
+//        String dateFormat = localDate.plusDays(3).format(DateTimeFormatter.ofPattern("dd MMMM yyyy"));
+//        String messageTemplate;
+//        if (dayOfWeek == DayOfWeek.FRIDAY) {
+//            messageTemplate = "\uD83C\uDF89%s\uD83C\uDF89\nУспешная регистрация на MZGB-Квиз!\nИгра состоится " +
+//                    "%s\n\uD83E\uDD18Rock&Rofl\uD83E\uDD18";
+//        } else {
+//            messageTemplate = "\uD83C\uDF89%s\uD83C\uDF89\nУспешная регистрация на ТУЦ-Квиз!\nИгра состоится " +
+//                    "%s\n\uD83E\uDD18Rock&Rofl\uD83E\uDD18";
+//        }
         for (User user : chatIdList) {
-            String message = String.format(messageTemplate, user.getName(), dateFormat);
+//            String message = String.format(messageTemplate, user.getName(), dateFormat);
+            String message = messageGenerator.generateMessage(localDate, user.getName());
             telegramBot.execute(new SendMessage(user.getChatId(), message));
         }
         log.info("");

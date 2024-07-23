@@ -1,6 +1,5 @@
-package com.example.demo;
+package com.example.demo.registration;
 
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
 import java.io.FileInputStream;
