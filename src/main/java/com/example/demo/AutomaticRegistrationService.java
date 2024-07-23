@@ -1,7 +1,7 @@
-package com.example.demo.registration.service;
+package com.example.demo;
 
 import com.example.demo.model.User;
-import com.example.demo.registration.Configuration;
+import com.example.demo.Configuration;
 import com.example.demo.repository.UserRepository;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.request.InputPollOption;
@@ -198,6 +198,7 @@ public class AutomaticRegistrationService {
             String message = String.format(messageTemplate, user.getName(), dateFormat);
             telegramBot.execute(new SendMessage(user.getChatId(), message));
         }
+        log.info("");
         chatIdList.stream()
                 .filter(user -> user.getChatId() < 0)
                 .forEach(user -> sendPoll(localDate, user.getId()));
@@ -212,6 +213,7 @@ public class AutomaticRegistrationService {
             question = String.format("Иду на MZGB %s",
                     localDate.plusDays(3).format(DateTimeFormatter.ofPattern("dd MMMM yyyy")));
         }
+
         InputPollOption pollOption1 = new InputPollOption("Категорическое ДА");
         InputPollOption pollOption2 = new InputPollOption("Бессовестное НЕТ");
         InputPollOption pollOption3 = new InputPollOption("Робкое Отвечу позже");
