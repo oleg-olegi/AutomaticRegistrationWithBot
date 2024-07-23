@@ -1,6 +1,5 @@
-package com.example.demo.registration;
+package com.example.demo.registration.service;
 
-import com.example.demo.registration.service.AutomaticRegistrationService;
 import com.example.demo.model.User;
 import com.example.demo.repository.UserRepository;
 import com.pengrad.telegrambot.TelegramBot;
@@ -16,7 +15,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.DayOfWeek;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -101,17 +99,12 @@ public class AutomaticRegistrationServiceTest {
         users.add(user4);
         users.add(user5);
 
-        DayOfWeek friday = DayOfWeek.FRIDAY;
-        DayOfWeek monday = DayOfWeek.MONDAY;
-
         String fridayMessage = "Friday";
-        String mondayMessage = "Monday";
 
         when(userRepository.findAll()).thenReturn(users);
 
         List<User> testUsers = userRepository.findAll();
         assertEquals(5, testUsers.size());
-
 
         for (User user : testUsers) {
             telegramBot.execute(new SendMessage(user.getChatId(), fridayMessage));
