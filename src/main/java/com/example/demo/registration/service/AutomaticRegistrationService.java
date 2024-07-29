@@ -7,7 +7,7 @@ import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.request.InputPollOption;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.SendPoll;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -18,10 +18,11 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
-@Log4j2
+@Slf4j
 public class AutomaticRegistrationService {
     @Autowired
     private TelegramBot telegramBot;
@@ -44,11 +45,17 @@ public class AutomaticRegistrationService {
 
     @Scheduled(cron = "00 59 11 ? * MON,FRI")
     public void scheduleTask() {
+        log.info("Starting schedule task");
         try {
             performLogin();
+            log.info("Login successful");
+
             navigateToGameRegistrationPage();
+            log.info("After method navigateToGameRegistrationPage");
+
             while (flag) {
                 Thread.sleep(1000);
+                log.info("Before method performRegistrationTask");
                 performRegistrationTask();
             }
         } catch (InterruptedException e) {
@@ -183,40 +190,41 @@ public class AutomaticRegistrationService {
         log.info("Button 'Регистрация на игру' was clicked");
     }
 
-    private void sendSuccessMessage() {
+    public void sendSuccessMessage() {
         log.info("In method sendSuccessMessage()");
-        List<User> chatIdList = userRepository.findAll();
-        LocalDate localDate = LocalDate.now();
-        DayOfWeek dayOfWeek = localDate.getDayOfWeek();
 
-//        String dateFormat = localDate.plusDays(3).format(DateTimeFormatter.ofPattern("dd MMMM yyyy"));
-//        String messageTemplate;
-//        if (dayOfWeek == DayOfWeek.FRIDAY) {
-//            messageTemplate = "\uD83C\uDF89%s\uD83C\uDF89\nУспешная регистрация на MZGB-Квиз!\nИгра состоится " +
-//                    "%s\n\uD83E\uDD18Rock&Rofl\uD83E\uDD18";
-//        } else {
-//            messageTemplate = "\uD83C\uDF89%s\uD83C\uDF89\nУспешная регистрация на ТУЦ-Квиз!\nИгра состоится " +
-//                    "%s\n\uD83E\uDD18Rock&Rofl\uD83E\uDD18";
-//        }
+        List<User> chatIdList = userRepository.findAll();
+        log.info("Number of chat ids is {}", chatIdList.size());
+
+        LocalDate localDate = LocalDate.now();
+        log.info("Local date is {}", localDate);
+
+        log.info("Before loop to send success messages for users from list");
         for (User user : chatIdList) {
-//            String message = String.format(messageTemplate, user.getName(), dateFormat);
             String message = messageGenerator.generateMessage(localDate, user.getName());
+            log.info("Message is {}", message);
+
+            log.info("Trying to send success message");
             telegramBot.execute(new SendMessage(user.getChatId(), message));
         }
-        log.info("");
+        log.info("Trying to send poll");
+        log.info("chatIdList {}", chatIdList);
         chatIdList.stream()
                 .filter(user -> user.getChatId() < 0)
-                .forEach(user -> sendPoll(localDate, user.getId()));
+                .forEach(user -> sendPoll(localDate, user.getChatId()));
     }
 
-    private void sendPoll(LocalDate localDate, Long chatId) {
+    public void sendPoll(LocalDate localDate, Long chatId) {
+        log.info("In method sendPoll()");
         String question;
         if (localDate.getDayOfWeek() == DayOfWeek.MONDAY) {
             question = String.format("Иду на ТУЦ %s",
                     localDate.plusDays(3).format(DateTimeFormatter.ofPattern("dd MMMM yyyy")));
+            log.info("Question = {}", question);
         } else {
             question = String.format("Иду на MZGB %s",
                     localDate.plusDays(3).format(DateTimeFormatter.ofPattern("dd MMMM yyyy")));
+            log.info("Question = {}", question);
         }
 
         InputPollOption pollOption1 = new InputPollOption("Категорическое ДА");
@@ -228,6 +236,7 @@ public class AutomaticRegistrationService {
         SendPoll poll = new SendPoll(chatId, question, pollOptionsArray)
                 .isAnonymous(false) // устанавливаем, будет ли опрос анонимным
                 .allowsMultipleAnswers(false); // можно ли выбрать несколько ответов;
+        log.info("Trying to do telegramBot.execute(poll)");
         telegramBot.execute(poll);
     }
 }

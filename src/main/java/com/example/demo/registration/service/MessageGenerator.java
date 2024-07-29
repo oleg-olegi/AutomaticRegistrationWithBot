@@ -2,6 +2,7 @@ package com.example.demo.registration.service;
 
 import com.example.demo.model.User;
 import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
@@ -9,7 +10,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 @Service
-@Log4j2
+@Slf4j
 public class MessageGenerator {
     public String generateMessage(LocalDate localDate, String name) {
         DayOfWeek dayOfWeek = localDate.getDayOfWeek();

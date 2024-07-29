@@ -6,21 +6,22 @@ import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.model.Update;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-@Log4j2
+@Slf4j
 public class BotUpdateListener implements UpdatesListener {
 
     private final TelegramBot telegramBot;
 
     @Autowired
-    public BotUpdateListener(TelegramBot telegramBot, UserRepository userRepository) {
+    public BotUpdateListener(TelegramBot telegramBot) {
+        log.info("BotUpdateListener is created");
         this.telegramBot = telegramBot;
-
     }
 
     @PostConstruct
