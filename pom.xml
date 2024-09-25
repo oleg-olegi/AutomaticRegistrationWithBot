@@ -67,12 +67,12 @@
             <artifactId>selenium-java</artifactId>
             <version>4.23.0</version>
         </dependency>
-<!--        &lt;!&ndash; https://mvnrepository.com/artifact/org.seleniumhq.selenium/selenium-chrome-driver &ndash;&gt;-->
-<!--        <dependency>-->
-<!--            <groupId>org.seleniumhq.selenium</groupId>-->
-<!--            <artifactId>selenium-chrome-driver</artifactId>-->
-<!--            <version>4.23.0</version>-->
-<!--        </dependency>-->
+        <!--        &lt;!&ndash; https://mvnrepository.com/artifact/org.seleniumhq.selenium/selenium-chrome-driver &ndash;&gt;-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.seleniumhq.selenium</groupId>-->
+        <!--            <artifactId>selenium-chrome-driver</artifactId>-->
+        <!--            <version>4.23.0</version>-->
+        <!--        </dependency>-->
 
         <dependency>
             <groupId>ch.qos.logback</groupId>

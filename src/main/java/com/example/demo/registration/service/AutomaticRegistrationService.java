@@ -18,7 +18,6 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -236,6 +235,7 @@ public class AutomaticRegistrationService {
         SendPoll poll = new SendPoll(chatId, question, pollOptionsArray)
                 .isAnonymous(false) // устанавливаем, будет ли опрос анонимным
                 .allowsMultipleAnswers(false); // можно ли выбрать несколько ответов;
+
         log.info("Trying to do telegramBot.execute(poll)");
         telegramBot.execute(poll);
     }
