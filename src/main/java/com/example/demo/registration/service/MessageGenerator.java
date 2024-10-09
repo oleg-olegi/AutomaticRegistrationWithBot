@@ -1,7 +1,5 @@
 package com.example.demo.registration.service;
 
-import com.example.demo.model.User;
-import lombok.extern.log4j.Log4j2;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -17,10 +15,10 @@ public class MessageGenerator {
         String dateFormat = localDate.plusDays(3).format(DateTimeFormatter.ofPattern("dd MMMM yyyy"));
         String messageTmp;
         if (dayOfWeek == DayOfWeek.FRIDAY) {
-            messageTmp = "\uD83C\uDF89%s\uD83C\uDF89\nУспешная регистрация на MZGB-Квиз!\nИгра состоится " +
+            messageTmp = "\uD83C\uDF89%s\uD83C\uDF89\nЭТО регистрация на МОЗГОБОЙНЮ!\uD83E\uDDE0\nИгра в ПОНЕДЕЛЬНИК " +
                     "%s\n\uD83E\uDD18Rock&Rofl\uD83E\uDD18";
         } else {
-            messageTmp = "\uD83C\uDF89%s\uD83C\uDF89\nУспешная регистрация на ТУЦ-Квиз!\nИгра состоится " +
+            messageTmp = "\uD83C\uDF89%s\uD83C\uDF89\nЭТО регистрация на ТУЦ-ТУЦ!\uD83C\uDFB6\nИгра в ЧЕТВЕРГ " +
                     "%s\n\uD83E\uDD18Rock&Rofl\uD83E\uDD18";
         }
         return String.format(messageTmp, name, dateFormat);

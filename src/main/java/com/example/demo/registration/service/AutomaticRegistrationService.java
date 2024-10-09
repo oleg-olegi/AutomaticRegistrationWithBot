@@ -112,24 +112,45 @@ public class AutomaticRegistrationService {
             short counter = 0;
             log.info("Refreshed page");
             while (buttonFlag) {
+
                 log.info("Cycle of checking the 'Зарегистрироваться' button");
+
                 List<WebElement> registerButtons = driver.findElements(By.xpath(
                         "//button[contains(text(), 'Зарегистрироваться')]"));
+
                 log.info("Count of buttons 'Зарегистрироваться' = {}", registerButtons.size());
 
                 List<WebElement> activeButtons = registerButtons.stream()
                         .filter(button -> button.getAttribute("disabled") == null)
                         .toList();
+
                 log.info("Count of active buttons 'Зарегистрироваться' = {}", activeButtons.size());
+
                 if (activeButtons.isEmpty()) {
                     counter++;
                     driver.navigate().refresh();
                     log.info("Page was refreshed in loop");
                     Thread.sleep(SLEEP_DURATION_MS_IN_LOOP);
                     log.info("Waiting 1.5 sec");
+
+                    // Здесь могут быть вопросы
                 } else {
-                    registerButtonClick(activeButtons.get(0));
+                    if (now.getDayOfWeek().equals(DayOfWeek.MONDAY)) {
+                        log.info("Понедельник");
+
+                        if (activeButtons.size() == 1) {
+                            log.info("Активных кнопок 1");
+                            registerButtonClick(activeButtons.get(0));
+                        } else {
+
+                            log.info("Активных кнопок 2, жмем вторую");
+                            registerButtonClick(activeButtons.get(1));
+                        }
+                    } else {
+                        registerButtonClick(activeButtons.get(0));
+                    }
                 }
+                // до сюда
             }
             if (counter == MAX_COUNTER) {
                 driver.quit();
@@ -217,18 +238,18 @@ public class AutomaticRegistrationService {
         log.info("In method sendPoll()");
         String question;
         if (localDate.getDayOfWeek() == DayOfWeek.MONDAY) {
-            question = String.format("Иду на ТУЦ %s",
+            question = String.format("Иду на ТУЦ-ТУЦ\uD83C\uDFB6 %s",
                     localDate.plusDays(3).format(DateTimeFormatter.ofPattern("dd MMMM yyyy")));
             log.info("Question = {}", question);
         } else {
-            question = String.format("Иду на MZGB %s",
+            question = String.format("Иду на МОЗГОБОЙНЮ\uD83E\uDDE0 %s",
                     localDate.plusDays(3).format(DateTimeFormatter.ofPattern("dd MMMM yyyy")));
             log.info("Question = {}", question);
         }
 
-        InputPollOption pollOption1 = new InputPollOption("Категорическое ДА");
-        InputPollOption pollOption2 = new InputPollOption("Бессовестное НЕТ");
-        InputPollOption pollOption3 = new InputPollOption("Робкое Отвечу позже");
+        InputPollOption pollOption1 = new InputPollOption("ПРИДУ");
+        InputPollOption pollOption2 = new InputPollOption("ВСЕ СЛОЖНО");
+        InputPollOption pollOption3 = new InputPollOption("В АКТИВНОМ ПОИСКЕ");
 
         InputPollOption[] pollOptionsArray = {pollOption1, pollOption2, pollOption3};
 
