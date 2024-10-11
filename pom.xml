@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.1</version>
+        <version>3.3.3</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.example</groupId>
@@ -44,7 +44,8 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <scope>runtime</scope>
+            <version>42.7.3</version>
+            <scope>runtime</scope><!-- Проверьте наличие последней версии -->
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -114,7 +115,7 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>3.3.1</version>
+                <version>3.3.3</version>
                 <configuration>
                     <mainClass>com.example.demo.AutomaticRegistrationWithBotApplication</mainClass>
                     <layout>ZIP</layout>

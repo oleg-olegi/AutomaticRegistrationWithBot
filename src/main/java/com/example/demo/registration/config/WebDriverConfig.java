@@ -14,7 +14,6 @@ public class WebDriverConfig {
     public WebDriver webDriver() {
         log.info("Creating web driver");
         ChromeOptions options = new ChromeOptions();
-        // Добавьте любые опции, которые вам нужны для конфигурации Chrome
         return new ChromeDriver(options);
     }
 }
