@@ -38,12 +38,13 @@ public class AutomaticRegistrationService {
     private boolean buttonFlag = true;
 
     private static final int TARGET_HOUR = 12;
-    private static final int TARGET_MINUTE = 0;
+    private static final int TARGET_MINUTE = 51;
     private static final int MAX_COUNTER = 10;
     private static final int SLEEP_DURATION_MS_IN_LOOP = 1500;
 
 
-    @Scheduled(cron = "00 59 11 ? * MON,FRI")
+    @Scheduled(cron = "00 50 12 ? * MON,FRI")
+//    @Scheduled(cron = "00 59 11 ? * MON,FRI")
     public void scheduleTask() {
         log.info("Starting schedule task");
         try {
@@ -104,7 +105,7 @@ public class AutomaticRegistrationService {
         }
     }
 
-    // выходим на главную страницу регистрации
+    //2 выходим на главную страницу регистрации
     private void navigateToGameRegistrationPage() {
         try {
             WebElement element = driver.findElement(By.cssSelector(
@@ -133,7 +134,7 @@ public class AutomaticRegistrationService {
                 log.info("Cycle of checking the 'Зарегистрироваться' button");
 
                 List<WebElement> registerActiveButtons = driver.findElements(
-                                By.xpath("//button[contains(text(), 'Зарегистрироваться')"))
+                                By.xpath("//button[contains(text(), 'Зарегистрироваться')]"))
                         .stream()
                         .filter(button -> button.getAttribute("disabled") == null)
                         .toList();
@@ -165,132 +166,132 @@ public class AutomaticRegistrationService {
                             log.info("Активных кнопок 2, жмем вторую");
                             registerButtonClick(registerActiveButtons.get(1));
                         }
-                } else{
-                    registerButtonClick(registerActiveButtons.get(0));
+                    } else {
+                        registerButtonClick(registerActiveButtons.get(0));
+                    }
                 }
+                // до сюда
             }
-            // до сюда
+            if (counter == MAX_COUNTER) {
+                driver.quit();
+            }
+            completeRegistrationSteps();
+        } else {
+            log.info("It's not time for registration yet.");
         }
-        if (counter == MAX_COUNTER) {
-            driver.quit();
+    }
+
+    private void registerButtonClick(WebElement registerButton) {
+        try {
+            JavascriptExecutor executor = (JavascriptExecutor) driver;
+            executor.executeScript("arguments[0].scrollIntoView(true);", registerButton);
+            registerButton.click();
+            buttonFlag = false;
+            log.info("Button 'Зарегистрироваться' was clicked");
+        } catch (StaleElementReferenceException | NoSuchElementException e) {
+            log.error("Error clicking register button: {}", e.getMessage(), e);
+            throw e;
         }
-        completeRegistrationSteps();
-    } else{
-        log.info("It's not time for registration yet.");
-    }
-}
-
-private void registerButtonClick(WebElement registerButton) {
-    try {
-        JavascriptExecutor executor = (JavascriptExecutor) driver;
-        executor.executeScript("arguments[0].scrollIntoView(true);", registerButton);
-        registerButton.click();
-        buttonFlag = false;
-        log.info("Button 'Зарегистрироваться' was clicked");
-    } catch (StaleElementReferenceException | NoSuchElementException e) {
-        log.error("Error clicking register button: {}", e.getMessage(), e);
-        throw e;
-    }
-}
-
-private void completeRegistrationSteps() {
-    try {
-        clickMoveButton();
-        clickPlusIconMultipleTimes(4);
-        clickMoveButton();
-        clickFinalRegistrationButton();
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
-        log.info("Waiting 10 sec");
-        sendSuccessMessage();
-        flag = false;
-    } catch (NoSuchElementException e) {
-        log.error("Error completing registration steps: {}", e.getMessage(), e);
-        throw e;
-    }
-}
-
-private void clickMoveButton() {
-    WebElement moveButton = driver.findElement(By.xpath("//button[contains(text(), 'Далее')]"));
-    if (moveButton.isDisplayed() && moveButton.isEnabled()) {
-        log.info("Кнопка Далее видна и доступна");
-        moveButton.click();
-    } else {
-        log.info("Кнопка Далее НЕ видна и доступна");
-        JavascriptExecutor executor = (JavascriptExecutor) driver;
-        executor.executeScript("arguments[0].scrollIntoView(true);", moveButton);
-        moveButton.click();
-    }
-    log.info("Button 'Далее' was clicked");
-}
-
-private void clickPlusIconMultipleTimes(int times) {
-    WebElement plusIcon = driver.findElement(By.cssSelector("img[src='/img/icons/plus.svg']"));
-    for (int i = 0; i < times; i++) {
-        plusIcon.click();
-        log.info("Button '+' was clicked {} times", times);
-    }
-    try {
-        Thread.sleep(1500);
-        log.info("Поток спит 1,5 сек");
-    } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-    }
-}
-
-private void clickFinalRegistrationButton() {
-    WebElement registrationButton = driver.findElement(By.xpath("//button[contains(text(), 'Регистрация на игру')]"));
-    registrationButton.click();
-    log.info("Button 'Регистрация на игру' was clicked");
-}
-
-public void sendSuccessMessage() {
-    log.info("In method sendSuccessMessage()");
-
-    List<User> chatIdList = userRepository.findAll();
-    log.info("Number of chat ids is {}", chatIdList.size());
-
-    LocalDate localDate = LocalDate.now();
-    log.info("Local date is {}", localDate);
-
-    log.info("Before loop to send success messages for users from list");
-    for (User user : chatIdList) {
-        String message = messageGenerator.generateMessage(localDate, user.getName());
-        log.info("Message is {}", message);
-
-        log.info("Trying to send success message");
-        telegramBot.execute(new SendMessage(user.getChatId(), message));
-    }
-    log.info("Trying to send poll");
-    log.info("chatIdList {}", chatIdList);
-    chatIdList.stream()
-            .filter(user -> user.getChatId() < 0)
-            .forEach(user -> sendPoll(localDate, user.getChatId()));
-}
-
-public void sendPoll(LocalDate localDate, Long chatId) {
-    log.info("In method sendPoll()");
-    String question;
-    if (localDate.getDayOfWeek() == DayOfWeek.MONDAY) {
-        question = String.format("Иду на ТУЦ-ТУЦ\uD83C\uDFB6 %s",
-                localDate.plusDays(3).format(DateTimeFormatter.ofPattern("dd MMMM yyyy")));
-        log.info("Question = {}", question);
-    } else {
-        question = String.format("Иду на МОЗГОБОЙНЮ\uD83E\uDDE0 %s",
-                localDate.plusDays(3).format(DateTimeFormatter.ofPattern("dd MMMM yyyy")));
-        log.info("Question = {}", question);
     }
 
-    InputPollOption pollOption1 = new InputPollOption("ПРИДУ");
-    InputPollOption pollOption2 = new InputPollOption("ВСЕ СЛОЖНО");
-    InputPollOption pollOption3 = new InputPollOption("В АКТИВНОМ ПОИСКЕ");
+    private void completeRegistrationSteps() {
+        try {
+            clickMoveButton();
+            clickPlusIconMultipleTimes(4);
+            clickMoveButton();
+            clickFinalRegistrationButton();
+            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+            log.info("Waiting 10 sec");
+            sendSuccessMessage();
+            flag = false;
+        } catch (NoSuchElementException e) {
+            log.error("Error completing registration steps: {}", e.getMessage(), e);
+            throw e;
+        }
+    }
 
-    InputPollOption[] pollOptionsArray = {pollOption1, pollOption2, pollOption3};
+    private void clickMoveButton() {
+        WebElement moveButton = driver.findElement(By.xpath("//button[contains(text(), 'Далее')]"));
+        if (moveButton.isDisplayed() && moveButton.isEnabled()) {
+            log.info("Кнопка Далее видна и доступна");
+            moveButton.click();
+        } else {
+            log.info("Кнопка Далее НЕ видна и доступна");
+            JavascriptExecutor executor = (JavascriptExecutor) driver;
+            executor.executeScript("arguments[0].scrollIntoView(true);", moveButton);
+            moveButton.click();
+        }
+        log.info("Button 'Далее' was clicked");
+    }
 
-    SendPoll poll = new SendPoll(chatId, question, pollOptionsArray)
-            .isAnonymous(false) // устанавливаем, будет ли опрос анонимным
-            .allowsMultipleAnswers(false); // можно ли выбрать несколько ответов;
+    private void clickPlusIconMultipleTimes(int times) {
+        WebElement plusIcon = driver.findElement(By.cssSelector("img[src='/img/icons/plus.svg']"));
+        for (int i = 0; i < times; i++) {
+            plusIcon.click();
+            log.info("Button '+' was clicked {} times", times);
+        }
+        try {
+            Thread.sleep(1500);
+            log.info("Поток спит 1,5 сек");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
 
-    log.info("Trying to do telegramBot.execute(poll)");
-    telegramBot.execute(poll);
-}
+    private void clickFinalRegistrationButton() {
+        WebElement registrationButton = driver.findElement(By.xpath("//button[contains(text(), 'Регистрация на игру')]"));
+        registrationButton.click();
+        log.info("Button 'Регистрация на игру' was clicked");
+    }
+
+    public void sendSuccessMessage() {
+        log.info("In method sendSuccessMessage()");
+
+        List<User> chatIdList = userRepository.findAll();
+        log.info("Number of chat ids is {}", chatIdList.size());
+
+        LocalDate localDate = LocalDate.now();
+        log.info("Local date is {}", localDate);
+
+        log.info("Before loop to send success messages for users from list");
+        for (User user : chatIdList) {
+            String message = messageGenerator.generateMessage(localDate, user.getName());
+            log.info("Message is {}", message);
+
+            log.info("Trying to send success message");
+            telegramBot.execute(new SendMessage(user.getChatId(), message));
+        }
+        log.info("Trying to send poll");
+        log.info("chatIdList {}", chatIdList);
+        chatIdList.stream()
+                .filter(user -> user.getChatId() < 0)
+                .forEach(user -> sendPoll(localDate, user.getChatId()));
+    }
+
+    public void sendPoll(LocalDate localDate, Long chatId) {
+        log.info("In method sendPoll()");
+        String question;
+        if (localDate.getDayOfWeek() == DayOfWeek.MONDAY) {
+            question = String.format("Иду на ТУЦ-ТУЦ\uD83C\uDFB6 %s",
+                    localDate.plusDays(3).format(DateTimeFormatter.ofPattern("dd MMMM yyyy")));
+            log.info("Question = {}", question);
+        } else {
+            question = String.format("Иду на МОЗГОБОЙНЮ\uD83E\uDDE0 %s",
+                    localDate.plusDays(3).format(DateTimeFormatter.ofPattern("dd MMMM yyyy")));
+            log.info("Question = {}", question);
+        }
+
+        InputPollOption pollOption1 = new InputPollOption("ПРИДУ");
+        InputPollOption pollOption2 = new InputPollOption("ВСЕ СЛОЖНО");
+        InputPollOption pollOption3 = new InputPollOption("В АКТИВНОМ ПОИСКЕ");
+
+        InputPollOption[] pollOptionsArray = {pollOption1, pollOption2, pollOption3};
+
+        SendPoll poll = new SendPoll(chatId, question, pollOptionsArray)
+                .isAnonymous(false) // устанавливаем, будет ли опрос анонимным
+                .allowsMultipleAnswers(false); // можно ли выбрать несколько ответов;
+
+        log.info("Trying to do telegramBot.execute(poll)");
+        telegramBot.execute(poll);
+    }
 }
