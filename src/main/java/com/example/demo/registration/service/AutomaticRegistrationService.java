@@ -38,13 +38,12 @@ public class AutomaticRegistrationService {
     private boolean buttonFlag = true;
 
     private static final int TARGET_HOUR = 12;
-    private static final int TARGET_MINUTE = 51;
+    private static final int TARGET_MINUTE = 0;
     private static final int MAX_COUNTER = 10;
     private static final int SLEEP_DURATION_MS_IN_LOOP = 1500;
 
 
-    @Scheduled(cron = "00 50 12 ? * MON,FRI")
-//    @Scheduled(cron = "00 59 11 ? * MON,FRI")
+    @Scheduled(cron = "30 59 11 ? * MON,FRI")
     public void scheduleTask() {
         log.info("Starting schedule task");
         try {
