@@ -5,8 +5,10 @@ import com.example.demo.registration.Configuration;
 import com.example.demo.repository.UserRepository;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.request.InputPollOption;
+import com.pengrad.telegrambot.request.PinChatMessage;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.SendPoll;
+import com.pengrad.telegrambot.request.UnpinAllChatMessages;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -139,7 +141,7 @@ public class AutomaticRegistrationService {
                         .toList();
 
                 log.info("Count of active buttons 'Зарегистрироваться' = {}", registerActiveButtons.size());
-
+//это не нужно вроде
 //                List<WebElement> activeButtons = registerButtons.stream()
 //                        .filter(button -> button.getAttribute("disabled") == null)
 //                        .toList();
@@ -161,7 +163,6 @@ public class AutomaticRegistrationService {
                             log.info("Активных кнопок 1");
                             registerButtonClick(registerActiveButtons.get(0));
                         } else {
-
                             log.info("Активных кнопок 2, жмем вторую");
                             registerButtonClick(registerActiveButtons.get(1));
                         }
@@ -291,6 +292,17 @@ public class AutomaticRegistrationService {
                 .allowsMultipleAnswers(false); // можно ли выбрать несколько ответов;
 
         log.info("Trying to do telegramBot.execute(poll)");
-        telegramBot.execute(poll);
+        var pollMessage = telegramBot.execute(poll);
+        if (pollMessage != null && pollMessage.message() != null) {
+            Integer messageId = pollMessage.message().messageId();
+            try {
+                telegramBot.execute(new UnpinAllChatMessages(chatId));
+
+                telegramBot.execute(new PinChatMessage(chatId, messageId));
+            }
+            catch (Exception e) {
+                telegramBot.execute(new SendMessage(chatId, "Произошла ошибка при попытке закрепить опрос"));
+            }
+        }
     }
 }

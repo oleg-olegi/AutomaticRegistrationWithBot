@@ -3,9 +3,13 @@ package com.example.demo.registration.service;
 import com.example.demo.model.User;
 import com.example.demo.repository.UserRepository;
 import com.pengrad.telegrambot.TelegramBot;
+import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.request.InputPollOption;
+import com.pengrad.telegrambot.request.PinChatMessage;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.SendPoll;
+import com.pengrad.telegrambot.request.UnpinAllChatMessages;
+import com.pengrad.telegrambot.response.SendResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -82,6 +86,26 @@ public class AutomaticRegistrationServiceTest {
         for (SendPoll poll : capturedPolls) {
             assertNotNull(poll);
         }
+    }
+
+    @Test
+    void checkPinMsg() {
+        Long chatId = -123456789L;
+        LocalDate localDate = LocalDate.of(2024, 10, 15);
+
+        // Мокируем поведение telegramBot.execute() для SendPoll
+        SendResponse mockSendResponse = mock(SendResponse.class);
+        Message mockMessage = mock(Message.class);
+        when(mockMessage.messageId()).thenReturn(12345); // Пример messageId
+        when(mockSendResponse.message()).thenReturn(mockMessage);
+        when(telegramBot.execute(any(SendPoll.class))).thenReturn(mockSendResponse);
+
+        // Выполняем метод sendPoll()
+        automaticRegistrationService.sendPoll(localDate, chatId);
+
+        // Проверяем, что был вызван UnpinAllChatMessages и PinChatMessage
+        verify(telegramBot).execute(any(UnpinAllChatMessages.class));
+        verify(telegramBot).execute(any(PinChatMessage.class));
     }
 
 //    @Test
