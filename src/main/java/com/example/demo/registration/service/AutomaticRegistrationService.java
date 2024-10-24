@@ -7,14 +7,19 @@ import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.request.InputPollOption;
 import com.pengrad.telegrambot.request.PinChatMessage;
 import com.pengrad.telegrambot.request.SendMessage;
+import com.pengrad.telegrambot.request.SendPhoto;
 import com.pengrad.telegrambot.request.SendPoll;
 import com.pengrad.telegrambot.request.UnpinAllChatMessages;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -38,6 +43,8 @@ public class AutomaticRegistrationService {
 
     private boolean flag = true;
     private boolean buttonFlag = true;
+    @Value("${my.file.path}")
+    private String imagePath;
 
     private static final int TARGET_HOUR = 12;
     private static final int TARGET_MINUTE = 0;
@@ -49,7 +56,7 @@ public class AutomaticRegistrationService {
     public void scheduleTask() {
         log.info("Starting schedule task");
         try {
-//1 - сначала проваливаемся в этот метод
+            //1 - сначала проваливаемся в этот метод
             performLogin();
             log.info("Login successful");
 //2 - потом сюда
@@ -141,20 +148,12 @@ public class AutomaticRegistrationService {
                         .toList();
 
                 log.info("Count of active buttons 'Зарегистрироваться' = {}", registerActiveButtons.size());
-//это не нужно вроде
-//                List<WebElement> activeButtons = registerButtons.stream()
-//                        .filter(button -> button.getAttribute("disabled") == null)
-//                        .toList();
-//
-//                log.info("Count of active buttons 'Зарегистрироваться' = {}", activeButtons.size());
-
                 if (registerActiveButtons.isEmpty()) {
                     counter++;
                     driver.navigate().refresh();
                     log.info("Page was refreshed in loop");
                     Thread.sleep(SLEEP_DURATION_MS_IN_LOOP);
                     log.info("Waiting 1.5 sec");
-
                     // Здесь могут быть вопросы
                 } else {
                     if (now.getDayOfWeek().equals(DayOfWeek.MONDAY)) {
@@ -181,6 +180,40 @@ public class AutomaticRegistrationService {
         }
     }
 
+    public void sendSuccessMessage() {
+        log.info("In method sendSuccessMessage()");
+
+        List<User> chatIdList = userRepository.findAll();
+        log.info("Number of chat ids is {}", chatIdList.size());
+
+        LocalDate localDate = LocalDate.now();
+        //        log.info("Local date is {}", localDate);
+//        log.info("Before loop to send success messages for users from list");
+
+//Нужно убрать рассылку в личку
+//        for (User user : chatIdList) {
+//            String message = messageGenerator.generateMessage(localDate, user.getName());
+//            log.info("Message is {}", message);
+//
+//            log.info("Trying to send success message");
+//            telegramBot.execute(new SendMessage(user.getChatId(), message));
+//        }
+
+        log.info("Trying to send photo & poll");
+        log.info("chatIdList {}", chatIdList);
+
+        chatIdList.stream()
+                .filter(user -> user.getChatId() < 0)
+                .forEach(user -> {
+                    try {
+                        sendPhotoAndSendMessage(user.getChatId(), user.getName(), localDate);
+                        sendPoll(localDate, user.getChatId());
+                    } catch (IOException e) {
+                        telegramBot.execute(new SendMessage(user.getChatId(), "Не нашел нужную фотку (("));
+                    }
+                });
+    }
+
     private void registerButtonClick(WebElement registerButton) {
         try {
             JavascriptExecutor executor = (JavascriptExecutor) driver;
@@ -193,6 +226,7 @@ public class AutomaticRegistrationService {
             throw e;
         }
     }
+
 
     private void completeRegistrationSteps() {
         try {
@@ -244,31 +278,20 @@ public class AutomaticRegistrationService {
         log.info("Button 'Регистрация на игру' was clicked");
     }
 
-    public void sendSuccessMessage() {
-        log.info("In method sendSuccessMessage()");
-
-        List<User> chatIdList = userRepository.findAll();
-        log.info("Number of chat ids is {}", chatIdList.size());
-
-        LocalDate localDate = LocalDate.now();
-        log.info("Local date is {}", localDate);
-
-        log.info("Before loop to send success messages for users from list");
-        for (User user : chatIdList) {
-            String message = messageGenerator.generateMessage(localDate, user.getName());
-            log.info("Message is {}", message);
-
-            log.info("Trying to send success message");
-            telegramBot.execute(new SendMessage(user.getChatId(), message));
+    private void sendPhotoAndSendMessage(Long chatId, String userName, LocalDate localDate) throws IOException {
+        log.info("PHOTO METHOD!!!");
+        ClassPathResource imgFile = new ClassPathResource(imagePath);  // Используем ClassPathResource
+        try (InputStream stream = imgFile.getInputStream()) {
+            byte[] imageBytes = stream.readAllBytes();
+            SendPhoto sendPhoto = new SendPhoto(chatId, imageBytes).caption(messageGenerator.generateMessage(localDate, userName));
+            telegramBot.execute(sendPhoto);
+        } catch (IOException e) {
+            log.error("Error while sending photo", e);
+            throw e;
         }
-        log.info("Trying to send poll");
-        log.info("chatIdList {}", chatIdList);
-        chatIdList.stream()
-                .filter(user -> user.getChatId() < 0)
-                .forEach(user -> sendPoll(localDate, user.getChatId()));
     }
 
-    public void sendPoll(LocalDate localDate, Long chatId) {
+    private void sendPoll(LocalDate localDate, Long chatId) {
         log.info("In method sendPoll()");
         String question;
         if (localDate.getDayOfWeek() == DayOfWeek.MONDAY) {
@@ -297,10 +320,8 @@ public class AutomaticRegistrationService {
             Integer messageId = pollMessage.message().messageId();
             try {
                 telegramBot.execute(new UnpinAllChatMessages(chatId));
-
                 telegramBot.execute(new PinChatMessage(chatId, messageId));
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 telegramBot.execute(new SendMessage(chatId, "Произошла ошибка при попытке закрепить опрос"));
             }
         }

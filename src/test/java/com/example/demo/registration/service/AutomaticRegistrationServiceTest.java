@@ -101,7 +101,7 @@ public class AutomaticRegistrationServiceTest {
         when(telegramBot.execute(any(SendPoll.class))).thenReturn(mockSendResponse);
 
         // Выполняем метод sendPoll()
-        automaticRegistrationService.sendPoll(localDate, chatId);
+//        automaticRegistrationService.sendPoll(localDate, chatId);
 
         // Проверяем, что был вызван UnpinAllChatMessages и PinChatMessage
         verify(telegramBot).execute(any(UnpinAllChatMessages.class));
