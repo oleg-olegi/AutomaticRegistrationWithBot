@@ -5,7 +5,6 @@ import com.example.demo.model.User;
 import com.example.demo.registration.Configuration;
 import com.example.demo.repository.UserRepository;
 import com.pengrad.telegrambot.TelegramBot;
-import com.pengrad.telegrambot.TelegramException;
 import com.pengrad.telegrambot.model.request.InputPollOption;
 import com.pengrad.telegrambot.request.PinChatMessage;
 import com.pengrad.telegrambot.request.SendMessage;
@@ -33,24 +32,26 @@ import java.util.List;
 @Slf4j
 public class AutomaticRegistrationService {
     @Autowired
-    private TelegramBot telegramBot;
+    private TelegramBot      telegramBot;
     @Autowired
-    private UserRepository userRepository;
+    private UserRepository   userRepository;
     @Autowired
-    private WebDriver driver;
+    private WebDriver        driver;
     @Autowired
-    private InlineKeyboard keyboard;
+    private InlineKeyboard   keyboard;
     @Autowired
     private MessageGenerator messageGenerator;
+    @Autowired
+    private Downloader       imageDownloader;
 
-    private boolean flag = true;
+    private boolean flag       = true;
     private boolean buttonFlag = true;
     @Value("${my.file.path}")
-    private String imagePath;
+    private String  imagePath;
 
-    private static final int TARGET_HOUR = 12;
-    private static final int TARGET_MINUTE = 0;
-    private static final int MAX_COUNTER = 10;
+    private static final int TARGET_HOUR               = 12;
+    private static final int TARGET_MINUTE             = 0;
+    private static final int MAX_COUNTER               = 10;
     private static final int SLEEP_DURATION_MS_IN_LOOP = 1500;
 
 
@@ -58,10 +59,13 @@ public class AutomaticRegistrationService {
     public void scheduleTask() {
         log.info("Starting schedule task");
         try {
-            //1 - сначала проваливаемся в этот метод
+            //1 - сначала вводи логин и пароль
             performLogin();
             log.info("Login successful");
-//2 - потом сюда
+            //2 - потом качаем картинку
+            imageDownloader.downloadImages(driver);
+
+            // 3 потом регистрация
             navigateToGameRegistrationPage();
             log.info("After method navigateToGameRegistrationPage");
 
@@ -208,7 +212,7 @@ public class AutomaticRegistrationService {
                 .filter(user -> user.getChatId() < 0)
                 .forEach(user -> {
                     try {
-                        sendPhotoAndSendMessage(user.getChatId(), user.getName(), localDate);
+                        sendPhotoAndSendMessage(user.getChatId(), localDate);
                         sendPoll(localDate, user.getChatId());
                     } catch (IOException e) {
                         telegramBot.execute(new SendMessage(user.getChatId(), "Не нашел нужную фотку (("));
@@ -280,12 +284,12 @@ public class AutomaticRegistrationService {
         log.info("Button 'Регистрация на игру' was clicked");
     }
 
-    private void sendPhotoAndSendMessage(Long chatId, String userName, LocalDate localDate) throws IOException {
+    private void sendPhotoAndSendMessage(Long chatId, LocalDate localDate) throws IOException {
         log.info("PHOTO METHOD!!!");
         ClassPathResource imgFile = new ClassPathResource(imagePath);  // Используем ClassPathResource
         try (InputStream stream = imgFile.getInputStream()) {
-            byte[] imageBytes = stream.readAllBytes();
-            SendPhoto sendPhoto = new SendPhoto(chatId, imageBytes).caption(messageGenerator.generateMessage(localDate, userName));
+            byte[]    imageBytes = stream.readAllBytes();
+            SendPhoto sendPhoto  = new SendPhoto(chatId, imageBytes).caption(messageGenerator.generateMessage(localDate));
             telegramBot.execute(sendPhoto);
         } catch (IOException e) {
             log.error("Error while sending photo", e);
@@ -302,11 +306,11 @@ public class AutomaticRegistrationService {
         String question;
         if (localDate.getDayOfWeek() == DayOfWeek.MONDAY) {
             question = String.format("Иду на ТУЦ-ТУЦ\uD83C\uDFB6 %s",
-                    localDate.plusDays(3).format(DateTimeFormatter.ofPattern("dd MMMM yyyy")));
+                                     localDate.plusDays(3).format(DateTimeFormatter.ofPattern("dd MMMM yyyy")));
             log.info("Question = {}", question);
         } else {
             question = String.format("Иду на МОЗГОБОЙНЮ\uD83E\uDDE0 %s",
-                    localDate.plusDays(3).format(DateTimeFormatter.ofPattern("dd MMMM yyyy")));
+                                     localDate.plusDays(3).format(DateTimeFormatter.ofPattern("dd MMMM yyyy")));
             log.info("Question = {}", question);
         }
 
@@ -321,9 +325,9 @@ public class AutomaticRegistrationService {
                 .type("quiz")
                 .correctOptionId(0)
                 .explanation("Я шуршу пуховиком на всю улицу\n" +
-                        "Он помогает мне не сутулиться\n" +
-                        "Мама говорит, что я — умница, а если вдуматься\n" +
-                        "В этой куртке так легко в меня втюриться")
+                             "Он помогает мне не сутулиться\n" +
+                             "Мама говорит, что я — умница, а если вдуматься\n" +
+                             "В этой куртке так легко в меня втюриться")
                 .isAnonymous(false) // устанавливаем, будет ли опрос анонимным
                 .allowsMultipleAnswers(false)
                 .replyMarkup(keyboard.getButton());// можно ли выбрать несколько ответов;

@@ -25,7 +25,7 @@ public class MessageGeneratorTest {
 
         User user = new User(1L, "Ivan", 1L, null);
 
-        String actualMessage = messageGenerator.generateMessage(localDate, user.getName());
+        String actualMessage = messageGenerator.generateMessage(localDate);
 
         assertEquals(expectedMessage, actualMessage);
     }
@@ -38,7 +38,7 @@ public class MessageGeneratorTest {
 
         User user = new User(1L, "Ivan", 1L, null);
 
-        String actualMessage = messageGenerator.generateMessage(localDate, user.getName());
+        String actualMessage = messageGenerator.generateMessage(localDate);
 
         assertEquals(expectedMessage, actualMessage);
     }
