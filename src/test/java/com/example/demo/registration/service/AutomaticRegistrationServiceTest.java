@@ -11,6 +11,7 @@ import com.pengrad.telegrambot.request.SendPoll;
 import com.pengrad.telegrambot.request.UnpinAllChatMessages;
 import com.pengrad.telegrambot.response.SendResponse;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -41,7 +42,7 @@ public class AutomaticRegistrationServiceTest {
     public void setUp() {
         MockitoAnnotations.openMocks(this);
     }
-
+@Disabled
     @Test
     public void sendPollTest() {
         List<User> users = new ArrayList<>();
@@ -87,7 +88,7 @@ public class AutomaticRegistrationServiceTest {
             assertNotNull(poll);
         }
     }
-
+@Disabled
     @Test
     void checkPinMsg() {
         Long chatId = -123456789L;

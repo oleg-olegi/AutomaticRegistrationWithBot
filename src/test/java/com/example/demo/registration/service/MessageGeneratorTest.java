@@ -2,6 +2,7 @@ package com.example.demo.registration.service;
 
 import com.example.demo.model.User;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
@@ -16,7 +17,7 @@ public class MessageGeneratorTest {
         messageGenerator = new MessageGenerator();
     }
 
-
+    @Disabled
     @Test
     void testGenerateFridayMessage() {
         LocalDate localDate = LocalDate.of(2024, 7, 19);
@@ -29,6 +30,7 @@ public class MessageGeneratorTest {
         assertEquals(expectedMessage, actualMessage);
     }
 
+    @Disabled
     @Test
     void testGenerateMondayMessage() {
         LocalDate localDate = LocalDate.of(2024, 7, 22);

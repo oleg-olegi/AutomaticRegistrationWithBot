@@ -10,7 +10,8 @@ public class InlineKeyboard {
     public InlineKeyboardMarkup getButton() {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         InlineKeyboardButton button = new InlineKeyboardButton("Если хочешь, можно нажать")
-                .callbackData("callback");
+                .callbackData("");
+        button.setUrl("https://vtb.mzgb.net/");
         inlineKeyboardMarkup.addRow(button);
         return inlineKeyboardMarkup;
     }

@@ -1,9 +1,11 @@
 package com.example.demo.registration.service;
 
+import com.example.demo.keyboard.InlineKeyboard;
 import com.example.demo.model.User;
 import com.example.demo.registration.Configuration;
 import com.example.demo.repository.UserRepository;
 import com.pengrad.telegrambot.TelegramBot;
+import com.pengrad.telegrambot.TelegramException;
 import com.pengrad.telegrambot.model.request.InputPollOption;
 import com.pengrad.telegrambot.request.PinChatMessage;
 import com.pengrad.telegrambot.request.SendMessage;
@@ -37,7 +39,7 @@ public class AutomaticRegistrationService {
     @Autowired
     private WebDriver driver;
     @Autowired
-    private Configuration configuration;
+    private InlineKeyboard keyboard;
     @Autowired
     private MessageGenerator messageGenerator;
 
@@ -291,6 +293,10 @@ public class AutomaticRegistrationService {
         }
     }
 
+//    private void sendMessageWithKeyboard(Long chatId) {
+//        telegramBot.execute(new SendMessage(chatId, "Click").replyMarkup(keyboard.getButton()));
+//    }
+
     private void sendPoll(LocalDate localDate, Long chatId) {
         log.info("In method sendPoll()");
         String question;
@@ -304,22 +310,32 @@ public class AutomaticRegistrationService {
             log.info("Question = {}", question);
         }
 
-        InputPollOption pollOption1 = new InputPollOption("ПРИДУ");
-        InputPollOption pollOption2 = new InputPollOption("ВСЕ СЛОЖНО");
-        InputPollOption pollOption3 = new InputPollOption("В АКТИВНОМ ПОИСКЕ");
+        InputPollOption pollOption1 = new InputPollOption("Лайк и подписка \uD83D\uDC4D");
+        InputPollOption pollOption2 = new InputPollOption("Дизлайк и отписка \uD83D\uDC4E");
+        InputPollOption pollOption3 = new InputPollOption("Обоюдно \uD83E\uDD19");
+        InputPollOption pollOption4 = new InputPollOption("Приду к третьему туру");
 
-        InputPollOption[] pollOptionsArray = {pollOption1, pollOption2, pollOption3};
+        InputPollOption[] pollOptionsArray = {pollOption1, pollOption2, pollOption3, pollOption4};
 
         SendPoll poll = new SendPoll(chatId, question, pollOptionsArray)
+                .type("quiz")
+                .correctOptionId(0)
+                .explanation("Я шуршу пуховиком на всю улицу\n" +
+                        "Он помогает мне не сутулиться\n" +
+                        "Мама говорит, что я — умница, а если вдуматься\n" +
+                        "В этой куртке так легко в меня втюриться")
                 .isAnonymous(false) // устанавливаем, будет ли опрос анонимным
-                .allowsMultipleAnswers(false); // можно ли выбрать несколько ответов;
+                .allowsMultipleAnswers(false)
+                .replyMarkup(keyboard.getButton());// можно ли выбрать несколько ответов;
+        //ставлю кнопку
+        poll.replyMarkup(keyboard.getButton());
 
         log.info("Trying to do telegramBot.execute(poll)");
         var pollMessage = telegramBot.execute(poll);
         if (pollMessage != null && pollMessage.message() != null) {
             Integer messageId = pollMessage.message().messageId();
             try {
-                telegramBot.execute(new UnpinAllChatMessages(chatId));
+                telegramBot.execute(new UnpinAllChatMessages(chatId)).description();
                 telegramBot.execute(new PinChatMessage(chatId, messageId));
             } catch (Exception e) {
                 telegramBot.execute(new SendMessage(chatId, "Произошла ошибка при попытке закрепить опрос"));
