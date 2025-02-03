@@ -13,7 +13,7 @@ import java.util.Date;
 
 @Getter
 @Entity
-@Table(name = "birthdayDB")
+@Table(name = "birthdaydb")
 @AllArgsConstructor
 @NoArgsConstructor
 public class User {

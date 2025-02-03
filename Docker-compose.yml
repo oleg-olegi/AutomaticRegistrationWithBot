@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: registration-with-bot111:latest
+    container_name: my-app-container321
+
+    ports:
+      - "8036:8036"
+    networks:
+      - app-network
+networks:
+  app-network:
+    driver: bridge
