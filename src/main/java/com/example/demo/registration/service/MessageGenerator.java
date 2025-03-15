@@ -16,7 +16,7 @@ public class MessageGenerator {
 
     private static String TIME;
     private static String PLACE;
-    private static String ADRESS;
+    private static String ADDRESS;
     private static String PRICE;
 
     public void findElements(WebElement card) {
@@ -27,7 +27,7 @@ public class MessageGenerator {
         PLACE = placeElement.getText();
         List<WebElement> venueElements = card.findElements(By.cssSelector("div.flex.items-center.mt-3.relative p.venue"));
         if (venueElements.size() > 1) {
-            ADRESS = venueElements.get(1).getText();  // Safely access the second element
+            ADDRESS = venueElements.get(1).getText();  // Safely access the second element
         }
         WebElement costElement = card.findElement(By.cssSelector("div.flex.items-center.mt-3 p.font-bold"));
         PRICE = costElement.getText();
@@ -35,15 +35,22 @@ public class MessageGenerator {
 
 
     public String generateMessage(LocalDate localDate) {
-        DayOfWeek dayOfWeek  = localDate.getDayOfWeek();
-        String    dateFormat = localDate.plusDays(3).format(DateTimeFormatter.ofPattern("dd MMMM yyyy"));
-        String    messageTmp;
+        DayOfWeek dayOfWeek = localDate.getDayOfWeek();
+        String dateFormat = localDate.plusDays(3).format(DateTimeFormatter.ofPattern("dd MMMM yyyy"));
+        String messageTmp;
         if (dayOfWeek == DayOfWeek.FRIDAY) {
-            messageTmp = "\uD83C\uDF89ЭТО регистрация на МОЗГОБОЙНЮ!\uD83C\uDF89\uD83E\uDDE0\nИгра в ПОНЕДЕЛЬНИК " +
-                         "%s\n\uD83E\uDD18Rock&Rofl\uD83E\uDD18";
+            messageTmp = """
+                    \uD83E\uDDE0Идем на МОЗГОБОЙНЮ!\uD83E\uDDE0
+                    КОГДА? - %s
+                    ВО СКОЛЬКО? - %s
+                    ГДЕ? - %s
+                    АДРЕС? - %s
+                    ЦЕНА? - %s
+                    \uD83E\uDD18Rock&Rofl\uD83E\uDD18
+                    """;
         } else {
             messageTmp = """
-                    \uD83C\uDF89МЫ идем на ТУЦ-ТУЦ!\uD83C\uDF89\uD83C\uDFB6
+                    \uD83C\uDFB6Идем на ТУЦ-ТУЦ!\uD83C\uDFB6
                     КОГДА? - %s
                     ВО СКОЛЬКО? - %s
                     ГДЕ? - %s
@@ -52,6 +59,6 @@ public class MessageGenerator {
                     \n\uD83E\uDD18Rock&Rofl\uD83E\uDD18
                     """;
         }
-        return String.format(messageTmp, dateFormat, TIME, PLACE, ADRESS, PRICE);
+        return String.format(messageTmp, dateFormat, TIME, PLACE, ADDRESS, PRICE);
     }
 }

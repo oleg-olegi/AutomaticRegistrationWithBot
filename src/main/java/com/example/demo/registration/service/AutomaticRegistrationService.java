@@ -5,53 +5,47 @@ import com.example.demo.model.User;
 import com.example.demo.registration.Configuration;
 import com.example.demo.repository.UserRepository;
 import com.pengrad.telegrambot.TelegramBot;
-import com.pengrad.telegrambot.model.request.InputPollOption;
-import com.pengrad.telegrambot.request.PinChatMessage;
-import com.pengrad.telegrambot.request.SendMessage;
-import com.pengrad.telegrambot.request.SendPhoto;
-import com.pengrad.telegrambot.request.SendPoll;
-import com.pengrad.telegrambot.request.UnpinAllChatMessages;
+import com.pengrad.telegrambot.request.*;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
 @Slf4j
 public class AutomaticRegistrationService {
     @Autowired
-    private TelegramBot      telegramBot;
+    private TelegramBot telegramBot;
     @Autowired
-    private UserRepository   userRepository;
+    private UserRepository userRepository;
     @Autowired
-    private WebDriver        driver;
+    private WebDriver driver;
     @Autowired
-    private InlineKeyboard   keyboard;
+    private InlineKeyboard keyboard;
     @Autowired
     private MessageGenerator messageGenerator;
     @Autowired
-    private Downloader       imageDownloader;
+    private Downloader imageDownloader;
+    @Autowired
+    PollSender pollSender;
 
-    private boolean flag       = true;
+    private boolean flag = true;
     private boolean buttonFlag = true;
     @Value("${my.file.path}")
-    private String  imagePath;
+    private String imagePath;
 
-    private static final int TARGET_HOUR               = 12;
-    private static final int TARGET_MINUTE             = 0;
-    private static final int MAX_COUNTER               = 10;
+    private static final int TARGET_HOUR = 12;
+    private static final int TARGET_MINUTE = 0;
+    private static final int MAX_COUNTER = 10;
     private static final int SLEEP_DURATION_MS_IN_LOOP = 1500;
 
 
@@ -62,16 +56,16 @@ public class AutomaticRegistrationService {
             //1 - сначала вводи логин и пароль
             performLogin();
             log.info("Login successful");
-            //2 - потом качаем картинку
-            imageDownloader.downloadImages(driver);
 
             // 3 потом регистрация
             navigateToGameRegistrationPage();
             log.info("After method navigateToGameRegistrationPage");
 
             while (flag) {
-                Thread.sleep(1000);
+                Thread.sleep(2000);
                 log.info("Before method performRegistrationTask");
+                //2 - потом качаем картинку
+                imageDownloader.downloadImages(driver);
                 // 3 - потом сюда
                 performRegistrationTask();
             }
@@ -193,18 +187,6 @@ public class AutomaticRegistrationService {
         log.info("Number of chat ids is {}", chatIdList.size());
 
         LocalDate localDate = LocalDate.now();
-        //        log.info("Local date is {}", localDate);
-//        log.info("Before loop to send success messages for users from list");
-
-//Нужно убрать рассылку в личку
-//        for (User user : chatIdList) {
-//            String message = messageGenerator.generateMessage(localDate, user.getName());
-//            log.info("Message is {}", message);
-//
-//            log.info("Trying to send success message");
-//            telegramBot.execute(new SendMessage(user.getChatId(), message));
-//        }
-
         log.info("Trying to send photo & poll");
         log.info("chatIdList {}", chatIdList);
 
@@ -213,7 +195,8 @@ public class AutomaticRegistrationService {
                 .forEach(user -> {
                     try {
                         sendPhotoAndSendMessage(user.getChatId(), localDate);
-                        sendPoll(localDate, user.getChatId());
+                        pollSender.sendPoll(localDate, user.getChatId(), telegramBot);
+                        sendVoice(user.getChatId());
                     } catch (IOException e) {
                         telegramBot.execute(new SendMessage(user.getChatId(), "Не нашел нужную фотку (("));
                     }
@@ -239,6 +222,7 @@ public class AutomaticRegistrationService {
             clickMoveButton();
             clickPlusIconMultipleTimes(4);
             clickMoveButton();
+            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(3));
             clickFinalRegistrationButton();
             driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
             log.info("Waiting 10 sec");
@@ -279,17 +263,19 @@ public class AutomaticRegistrationService {
     }
 
     private void clickFinalRegistrationButton() {
-        WebElement registrationButton = driver.findElement(By.xpath("//button[contains(text(), 'Регистрация на игру')]"));
+        WebElement registrationButton = driver.findElement(By.className("reg-event-complete"));
+
         registrationButton.click();
         log.info("Button 'Регистрация на игру' was clicked");
     }
 
     private void sendPhotoAndSendMessage(Long chatId, LocalDate localDate) throws IOException {
         log.info("PHOTO METHOD!!!");
-        ClassPathResource imgFile = new ClassPathResource(imagePath);  // Используем ClassPathResource
-        try (InputStream stream = imgFile.getInputStream()) {
-            byte[]    imageBytes = stream.readAllBytes();
-            SendPhoto sendPhoto  = new SendPhoto(chatId, imageBytes).caption(messageGenerator.generateMessage(localDate));
+        String imagePath = "C:/Users/trash/IdeaProjects/AutomaticRegistrationWithBot/images/quiz2.jpg"; // Или из конфигурации: @Value("${my.file.path}") String imagePath;
+        File imgFile = new File(imagePath);  // Используем File для работы с файловой системой
+        try (InputStream stream = new FileInputStream(imgFile)) {
+            byte[] imageBytes = stream.readAllBytes();
+            SendPhoto sendPhoto = new SendPhoto(chatId, imageBytes).caption(messageGenerator.generateMessage(localDate));
             telegramBot.execute(sendPhoto);
         } catch (IOException e) {
             log.error("Error while sending photo", e);
@@ -297,53 +283,17 @@ public class AutomaticRegistrationService {
         }
     }
 
-//    private void sendMessageWithKeyboard(Long chatId) {
-//        telegramBot.execute(new SendMessage(chatId, "Click").replyMarkup(keyboard.getButton()));
-//    }
-
-    private void sendPoll(LocalDate localDate, Long chatId) {
-        log.info("In method sendPoll()");
-        String question;
-        if (localDate.getDayOfWeek() == DayOfWeek.MONDAY) {
-            question = String.format("Иду на ТУЦ-ТУЦ\uD83C\uDFB6 %s",
-                                     localDate.plusDays(3).format(DateTimeFormatter.ofPattern("dd MMMM yyyy")));
-            log.info("Question = {}", question);
-        } else {
-            question = String.format("Иду на МОЗГОБОЙНЮ\uD83E\uDDE0 %s",
-                                     localDate.plusDays(3).format(DateTimeFormatter.ofPattern("dd MMMM yyyy")));
-            log.info("Question = {}", question);
-        }
-
-        InputPollOption pollOption1 = new InputPollOption("Лайк и подписка \uD83D\uDC4D");
-        InputPollOption pollOption2 = new InputPollOption("Дизлайк и отписка \uD83D\uDC4E");
-        InputPollOption pollOption3 = new InputPollOption("Обоюдно \uD83E\uDD19");
-        InputPollOption pollOption4 = new InputPollOption("Приду к третьему туру");
-
-        InputPollOption[] pollOptionsArray = {pollOption1, pollOption2, pollOption3, pollOption4};
-
-        SendPoll poll = new SendPoll(chatId, question, pollOptionsArray)
-                .type("quiz")
-                .correctOptionId(0)
-                .explanation("Я шуршу пуховиком на всю улицу\n" +
-                             "Он помогает мне не сутулиться\n" +
-                             "Мама говорит, что я — умница, а если вдуматься\n" +
-                             "В этой куртке так легко в меня втюриться")
-                .isAnonymous(false) // устанавливаем, будет ли опрос анонимным
-                .allowsMultipleAnswers(false)
-                .replyMarkup(keyboard.getButton());// можно ли выбрать несколько ответов;
-        //ставлю кнопку
-        poll.replyMarkup(keyboard.getButton());
-
-        log.info("Trying to do telegramBot.execute(poll)");
-        var pollMessage = telegramBot.execute(poll);
-        if (pollMessage != null && pollMessage.message() != null) {
-            Integer messageId = pollMessage.message().messageId();
-            try {
-                telegramBot.execute(new UnpinAllChatMessages(chatId)).description();
-                telegramBot.execute(new PinChatMessage(chatId, messageId));
-            } catch (Exception e) {
-                telegramBot.execute(new SendMessage(chatId, "Произошла ошибка при попытке закрепить опрос"));
-            }
+    private void sendVoice(Long chatId) {
+        String path = "C:/Users/trash/IdeaProjects/AutomaticRegistrationWithBot/audio/1.ogg";
+        File audioFile = new File(path);
+        try (InputStream stream = new FileInputStream(audioFile)){
+            byte[] bytes = stream.readAllBytes();
+            SendVoice sendVoice = new SendVoice(chatId, bytes);
+            telegramBot.execute(sendVoice);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 }
