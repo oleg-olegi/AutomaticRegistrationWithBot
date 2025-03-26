@@ -15,30 +15,30 @@ import java.util.List;
 
 @Component
 public class Downloader {
+    private static final String TUZ = "Туц Туц";
+    private static final String MZGB = "Мозгобойня";
+    private static final String PATH = "C:/Users/trash/IdeaProjects/AutomaticRegistrationWithBot/images/quiz2.jpg";
 
     @Autowired
     private MessageGenerator messageGenerator;
     private final LocalDate now = LocalDate.now();
 
     void downloadImages(WebDriver driverModel) {
-
         List<WebElement> cards = driverModel.findElements(By.className("card"));
-
         cards.stream()
-                .filter(card -> (now.getDayOfWeek().equals(DayOfWeek.MONDAY) && card.getText().contains("Туц Туц")) ||
-                        (now.getDayOfWeek().equals(DayOfWeek.FRIDAY) && card.getText().contains("Мозгобойня")))
+                .filter(card -> (now.getDayOfWeek().equals(DayOfWeek.MONDAY) && card.getText().contains(TUZ)) ||
+                        (now.getDayOfWeek().equals(DayOfWeek.FRIDAY) && card.getText().contains(MZGB)))
                 .findFirst() // Находим первый подходящий элемент
                 .ifPresent(card -> {  // Проверяем, найден ли элемент
                     findAndDownloadImg(card);
                     messageGenerator.findElements(card);
                 });
-                }
+    }
 
     private void findAndDownloadImg(WebElement card) {
         WebElement imgElement = card.findElement(By.cssSelector("img[src$='.jpg']"));
         String imgUrl = imgElement.getAttribute("src");
-        String savePath = "C:/Users/trash/IdeaProjects/AutomaticRegistrationWithBot/images/quiz2.jpg"; // Путь к файлу
-
+        String savePath = PATH; // Путь к файлу
         // Перезаписываем файл
         downloadImage(imgUrl, savePath);
     }
@@ -48,7 +48,6 @@ public class Downloader {
             URL url = new URL(imageUrl);
             URLConnection connection = url.openConnection();
             connection.connect();
-
             // Удаляем файл, если он существует
             File file = new File(savePath);
             if (file.exists()) {
@@ -57,7 +56,6 @@ public class Downloader {
 
             // Создаем новый файл
             file.createNewFile();
-
             try (InputStream is = connection.getInputStream();
                  BufferedInputStream bis = new BufferedInputStream(is);
                  FileOutputStream fos = new FileOutputStream(savePath)) {
